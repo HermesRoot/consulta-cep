@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta CEP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            max-width: 450px;
+            margin: 0 auto;
+            transition: transform 0.2s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #dfe6e9;
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0984e3;
+            outline: none;
+            box-shadow: 0 0 5px rgba(9, 132, 227, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0652dd;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dfe6e9;
+        }
+
+        .result h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+
+        .result p {
+            margin: 5px 0;
+            color: #636e72;
+        }
+
+        .error {
+            color: #d63031;
+            font-weight: 500;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consulta CEP</h1>
+        <label for="cep">Digite o CEP:</label>
+        <input type="text" id="cep" placeholder="Exemplo: 01001000" />
+        <button onclick="consultarCep()">Consultar</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function consultarCep() {
+            const cepInput = document.getElementById("cep");
+            let cep = cepInput.value.trim(); // Remove espaços extras
+            const resultDiv = document.getElementById("result");
+
+            // Limpa o conteúdo anterior antes de uma nova consulta
+            resultDiv.innerHTML = "";
+
+            // Remove o hífen (se presente) e mantém apenas os dígitos
+            cep = cep.replace(/[^\d]/g, '');
+
+            // Validação básica no front-end
+            if (!cep || !/^\d{8}$/.test(cep)) {
+                resultDiv.innerHTML = "<p class='error'>Por favor, insira um CEP válido com 8 dígitos.</p>";
+                return;
+            }
+
+            const url = `http://localhost:5000/consulta-cep?cep=${cep}`;
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const dados = await response.json();
+                    resultDiv.innerHTML = `
+                        <h3>Resultado:</h3>
+                        <p><strong>CEP:</strong> ${dados.cep || "Não informado"}</p>
+                        <p><strong>Cidade:</strong> ${dados.city || "Não informado"}</p>
+                        <p><strong>Bairro:</strong> ${dados.neighborhood || "Não informado"}</p>
+                        <p><strong>Estado:</strong> ${dados.state || "Não informado"}</p>
+                        <p><strong>Rua:</strong> ${dados.street || "Não informado"}</p>
+                    `;
+                } else {
+                    const erro = await response.json();
+                    resultDiv.innerHTML = `<p class='error'>${erro.erro || "Erro ao consultar o CEP."}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = "<p class='error'>Erro ao fazer a requisição. Tente novamente mais tarde.</p>";
+                console.error("Erro na requisição:", error);
+            }
+        }
+
+        // Evento para disparar a consulta ao pressionar "Enter"
+        document.getElementById("cep").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Evita comportamento padrão
+                consultarCep(); // Chama a mesma função do botão
+            }
+        });
+    </script>
+</body>
+</html>
